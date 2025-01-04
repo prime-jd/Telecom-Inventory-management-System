@@ -32,8 +32,11 @@ const userSchema = mongoose.Schema({
     lastLogin : {
         type : Date,
         required : true
+    },
+    role : {
+        type : "String",
+        required : true
     }
-
 
 
 }, {timestamps : true})

@@ -2,7 +2,6 @@ import asyncHandler from '../utils/asyncHandler.js';
 import { User } from '../models/user.model.js';
 import ApiResponse from '../utils/apiResponse.js';
 
-// Register User
 export const registerUser = asyncHandler(async (req, res) => {
   const user = await User.create(req.body);
   return res.status(201).json(new ApiResponse(201, "User registered successfully", user));
