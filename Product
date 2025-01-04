@@ -1,0 +1,90 @@
+const mongoose = require('mongoose');
+
+const ProductSchema = new mongoose.Schema({
+    name: { type: String, required: true },
+    category: { type: String, required: true },
+    stock: { type: Number, required: true },
+    reorderLevel: { type: Number, required: true },
+    createdAt: { type: Date, default: Date.now }
+});
+
+module.exports = mongoose.model('Product', ProductSchema);
+
+const Product = require('../models/Product');
+
+
+exports.addProduct = async (req, res) => {
+    const { name, category, stock, reorderLevel } = req.body;
+    try {
+        const product = new Product({ name, category, stock, reorderLevel });
+        await product.save();
+        res.status(201).json({ message: 'Product added successfully', product });
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+};
+
+exports.getProducts = async (req, res) => {
+    try {
+        const products = await Product.find();
+        res.json(products);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+exports.getProductById = async (req, res) => {
+    try {
+        const product = await Product.findById(req.params.id);
+        if (!product) {
+            return res.status(404).json({ message: 'Product not found' });
+        }
+        res.json(product);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+
+exports.updateProduct = async (req, res) => {
+    const { name, category, stock, reorderLevel } = req.body;
+    try {
+        const product = await Product.findByIdAndUpdate(req.params.id, 
+            { name, category, stock, reorderLevel }, 
+            { new: true, runValidators: true }
+        );
+        if (!product) {
+            return res.status(404).json({ message: 'Product not found' });
+        }
+        res.json({ message: 'Product updated successfully', product });
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+};
+
+
+exports.deleteProduct = async (req, res) => {
+    try {
+        const product = await Product.findByIdAndDelete(req.params.id);
+        if (!product) {
+            return res.status(404).json({ message: 'Product not found' });
+        }
+        res.json({ message: 'Product deleted successfully' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+const express = require('express');
+const router = express.Router();
+const { addProduct, getProducts, getProductById, updateProduct, deleteProduct } = require('../controllers/productController');
+const { protect, authorize } = require('../middleware/authMiddleware');
+
+
+router.post('/', protect, authorize(['Admin']), addProduct);
+router.get('/', protect, getProducts);
+router.get('/:id', protect, getProductById);
+router.put('/:id', protect, authorize(['Admin', 'Manager']), updateProduct);
+router.delete('/:id', protect, authorize(['Admin']), deleteProduct);
+
+module.exports = router;
